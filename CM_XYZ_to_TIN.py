@@ -175,6 +175,7 @@ for i in theFiles:
     
   except:
     # If an error occurred while running the tool, print the error messages.
+    arcpy.AddMessage("failed to create mb point feature classes")
     print arcpy.GetMessages()
 
 try:
@@ -346,11 +347,28 @@ arcpy.CalculateField_management(inTopoPts, FieldName, FieldValue, "PYTHON_9.3")
 dropFields = ["PT_ID", "GIS_KEY", "NORTHING", "EASTING", "ELEVATION", "DESCRIPTIO"]
 arcpy.DeleteField_management(inTopoPts, dropFields)
 #
-## Merge mb points, sb points, and topo points
+#############################################################
+#############################################################
+#
+## Merge mb points, sb points, and topo points and create list for making TIN
+#
 AllPtsMerge = str(workspaceGDB + "\\" + "AllPts_Seg_" + inSegment + "_" + inYear + "_merge")
-MergeList = [MBpointMerge, SBpointMerge, inTopoPts]
-arcpy.Merge_management(MergeList, AllPtsMerge)
-
+                                  
+try:
+  MergeList = [MBpointMerge, SBpointMerge, inTopoPts]
+  arcpy.Merge_management(MergeList, AllPtsMerge)
+  in_features = str(MBpointMerge + " POINT_Z masspoints; " + SBpointMerge + " POINT_Z masspoints; " + inTopoPts + " POINT_Z masspoints;" + inTopoBRK + " <None> softline;" + inTopoWE + " <None> softline")
+  arcpy.AddMessage("input features for tin...")
+  arcpy.AddMessage(in_features)
+except:
+  # assuming that not having SB points is cause for fail
+  MergeList = [MBpointMerge, inTopoPts]
+  arcpy.Merge_management(MergeList, AllPtsMerge)
+  in_features = str(MBpointMerge + " POINT_Z masspoints; " + inTopoPts + " POINT_Z masspoints;" + inTopoBRK + " <None> softline;" + inTopoWE + " <None> softline")
+  arcpy.AddMessage("did not create merged points with all files...")
+  print arcpy.GetMessages()
+  arcpy.AddMessage("created without SB points")
+  print arcpy.GetMessages()
 #
 #############################################################
 #############################################################
@@ -358,9 +376,6 @@ arcpy.Merge_management(MergeList, AllPtsMerge)
 ## Create TIN
 #
 out_tin = str(outTinFolder + "\\" + "Seg_" + inSegment + "_" + inYear + "_tin")
-in_features = str(MBpointMerge + " POINT_Z masspoints; " + SBpointMerge + " POINT_Z masspoints; " + inTopoPts + " POINT_Z masspoints;" + inTopoBRK + " <None> softline;" + inTopoWE + " <None> softline")
-arcpy.AddMessage("input features for tin...")
-arcpy.AddMessage(in_features)
 
 try:
   arcpy.CreateTin_3d(out_tin, spatialRef, in_features, False)
