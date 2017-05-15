@@ -203,7 +203,7 @@ expression = str('"' + "FID_TopoBND_Seg_" + inSegment + "_" + inYear + '" ' + ">
 arcpy.AddMessage("expression is...")
 arcpy.AddMessage(expression)
 arcpy.SelectLayerByAttribute_management(outUnionLayer, "NEW_SELECTION", expression)
-FieldValue = '"2"' #1 is for topo
+FieldValue = '"2"' #2 is for topo
 arcpy.CalculateField_management(outUnionLayer, FieldName, FieldValue, "PYTHON_9.3")
 #
 # select features smaller than threshold and eliminate
